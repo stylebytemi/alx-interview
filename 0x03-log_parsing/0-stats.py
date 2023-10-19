@@ -1,10 +1,8 @@
 #!/usr/bin/python3
-"""
-module contains a script that reads stdin line by line and computes metrics
-"""
+
 import sys
 
-
+# Initialize dictionaries to store status codes and file sizes
 status_codes = {
     "200": 0,
     "301": 0,
@@ -16,33 +14,47 @@ status_codes = {
     "500": 0
 }
 
-file_size = 0
-
+total_file_size = 0
+line_count = 0
 
 def print_metrics():
-    """prints of the logs"""
-    print("File size: {}".format(file_size))
+    """Print metrics including file size and status code counts."""
+    print("Total file size: {}".format(total_file_size))
     for status in sorted(status_codes.keys()):
         if status_codes[status]:
             print("{}: {}".format(status, status_codes[status]))
 
+try:
+    for line in sys.stdin:
+        try:
+            # Split the line into elements
+            elems = line.split()
+            
+            # Ensure the line matches the expected format
+            if len(elems) >= 7:
+                file_size = int(elems[-1])
+                status_code = elems[-2]
+                
+                # Update the total file size
+                total_file_size += file_size
+                
+                # Update status code counts
+                if status_code in status_codes:
+                    status_codes[status_code] += 1
+        except ValueError:
+            pass
 
-if __name__ == "__main__":
-    count = 0
-    try:
-        for line in sys.stdin:
-            try:
-                elems = line.split()
-                file_size += int(elems[-1])
-                if elems[-2] in status_codes:
-                    status_codes[elems[-2]] += 1
-            except Exception:
-                pass
-            if count == 9:
-                print_metrics()
-                count = -1
-            count += 1
-    except KeyboardInterrupt:
-        print_metrics()
-        raise
+        # Update line count
+        line_count += 1
+
+        # Check if we should print metrics
+        if line_count % 10 == 0:
+            print_metrics()
+
+except KeyboardInterrupt:
+    # Handle Ctrl+C by printing metrics
     print_metrics()
+    raise
+
+# Print final metrics
+print_metrics()
